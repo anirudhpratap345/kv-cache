@@ -1,15 +1,14 @@
 """
-Abstract base classes and interfaces for KV cache implementations.
+Simple in-memory KV cache for LLM KV states - no Redis needed.
 
-This module defines the contract that all KV cache backends must implement,
-ensuring interoperability and consistent behavior across different strategies.
+Pure Python implementation suitable for local development and small-scale serving.
 """
 
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, Tuple
 import torch
 from datetime import datetime, timedelta
+import time
 
 
 @dataclass
@@ -20,6 +19,7 @@ class CacheStatistics:
     evictions: int = 0
     total_bytes_stored: int = 0
     last_accessed: Optional[datetime] = None
+    total_compute_time_saved: float = 0.0  # seconds
     
     @property
     def hit_rate(self) -> float:
@@ -32,7 +32,8 @@ class CacheStatistics:
             f"Cache Stats:\n"
             f"  Hit Rate: {self.hit_rate:.2f}%\n"
             f"  Hits: {self.hits}, Misses: {self.misses}, Evictions: {self.evictions}\n"
-            f"  Total Size: {self.total_bytes_stored / (1024**3):.2f} GB"
+            f"  Total Size: {self.total_bytes_stored / (1024**3):.2f} GB\n"
+            f"  Time Saved: {self.total_compute_time_saved:.2f}s"
         )
 
 
